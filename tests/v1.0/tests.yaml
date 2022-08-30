@@ -1,0 +1,76 @@
+url: ""
+functions:
+- type: knative-workflow
+  id: scp
+  image: direktiv.azurecr.io/functions/scp:test
+states:
+- id: state0
+  type: action
+  action:
+    function: scp
+    input:
+      identity:
+        data: jq(.secrets.SSHKEY)
+        mode: "0600"
+        name: id
+      payload:
+        data: Hello, world!\n
+        name: payload
+      recursive: false
+      source: payload
+      target: myuser@192.168.1.10:/home/myuser/Downloads/payload
+      verbose: false
+    secrets:
+    - SSHKEY
+  transition: state1
+- id: state1
+  type: action
+  action:
+    function: scp
+    input:
+      identity:
+        data: jq(.secrets.SSHKEY)
+        mode: "0600"
+        name: id
+      recursive: false
+      source: payload
+      target: myuser@192.168.1.10:/home/myuser/Downloads/payload
+      verbose: false
+    secrets:
+    - SSHKEY
+    files:
+    - key: payload
+      as: payload
+      scope: namespace
+  transition: state2
+- id: state2
+  type: action
+  action:
+    function: scp
+    input:
+      identity:
+        data: jq(.secrets.SSHKEY)
+        mode: "0600"
+        name: id
+      recursive: false
+      source: myuser@192.168.1.10:/home/myuser/Downloads/payload
+      target: payload
+      verbose: false
+    secrets:
+    - SSHKEY
+  transition: state3
+- id: state3
+  type: action
+  action:
+    function: scp
+    input:
+      identity:
+        data: jq(.secrets.SSHKEY)
+        mode: "0600"
+        name: id
+      recursive: false
+      source: myuser@192.168.1.10:/home/myuser/Downloads/payload
+      target: myuser@192.168.1.11:/home/myuser/Downloads/payload
+      verbose: false
+    secrets:
+    - SSHKEY
