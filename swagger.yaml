@@ -1,0 +1,235 @@
+swagger: "2.0"
+info:
+  description: Run scp in Direktiv
+  title: scp
+  version: "1.0"
+  x-direktiv-meta:
+    container: direktiv.azurecr.io/functions/scp
+    maintainer: |-
+      [direktiv.io](https://www.direktiv.io) 
+    issues: https://github.com/direktiv-apps/scp/issues
+    url: https://github.com/direktiv-apps/scp  
+    categories:
+    - unknown
+    license: |-
+      [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+    long-description: >-
+      Run scp in Direktiv as a function
+consumes:
+- application/json
+produces:
+- application/json
+schemes:
+- http
+paths:
+  /: 
+    delete:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          description: |
+            On cancel Direktiv sends a DELETE request to
+            the action with id in the header
+      x-direktiv:
+        cancel: echo 'cancel {{ .DirektivActionID }}'
+      responses:
+        200:
+    post:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          default: development
+          description: |
+            direktiv action id is an UUID. 
+            For development it can be set to 'development'
+        - name: Direktiv-TempDir
+          in: header
+          type: string
+          default: /tmp
+          description: |
+            direktiv temp dir is the working directory for that request
+            For development it can be set to e.g. '/tmp'
+        - name: body
+          in: body
+          schema:
+            type: object
+            required:
+              - source
+              - target
+              - identity
+            properties:
+              source: 
+                type: string 
+              target:
+                type: string
+              identity:
+                $ref: '#/definitions/direktivFile'
+              payload:
+                $ref: '#/definitions/direktivFile'
+              recursive:
+                type: boolean
+              verbose:
+                type: boolean
+            default: 
+              source: payload
+              target: "myuser@192.168.1.10:/home/myuser/Downloads/payload"
+              identity:
+                name: id
+                data: |-
+                  -----BEGIN OPENSSH PRIVATE KEY-----
+                  b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+                  QyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHAAAAJA4vIewOLyH
+                  sAAAAAtzc2gtZWQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHA
+                  AAAED1FLdxsMggcj9GGV9BMktGHfZSfD0nbLCyehBj8MZw02g8gGl+Ssf53WYpleZgg6SU
+                  8TzXzQWmSqnhNvab/B4cAAAABm5vbmFtZQECAwQFBgc=
+                  -----END OPENSSH PRIVATE KEY-----
+                  
+                mode: "0600"
+              payload:
+                name: payload 
+                data: "Hello, world!\n"
+              recursive: false 
+              verbose: false
+      x-direktiv-function: |-
+        functions:
+        - id: scp
+          image: direktiv.azurecr.io/functions/scp:1.0
+          type: knative-workflow
+      x-direktiv-examples:
+        - title: Send payload from state data.
+          content: |-
+            - id: scp
+              type: action
+              action:
+                function: scp
+                secrets:
+                - SSHKEY
+                input: 
+                  source: payload 
+                  target: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
+                  identity: 
+                    name: id
+                    data: 'jq(.secrets.SSHKEY)'
+                    mode: "0600"
+                  payload:
+                    name: payload
+                    data: 'Hello, world!\n'
+                  recursive: false
+                  verbose: false
+        - title: Send payload from variable file.
+          content: |-
+            - id: scp
+              type: action
+              action:
+                function: scp
+                secrets:
+                - SSHKEY
+                files: 
+                - key: payload
+                  scope: namespace
+                  as: payload
+                input: 
+                  source: payload 
+                  target: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
+                  identity: 
+                    name: id
+                    data: 'jq(.secrets.SSHKEY)'
+                    mode: "0600"
+                  recursive: false
+                  verbose: false
+        - title: Get data from remote host and store in a variable file.
+          content: |-
+            - id: scp
+              type: action
+              action:
+                function: scp
+                secrets:
+                - SSHKEY
+                input: 
+                  source: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
+                  target: payload
+                  identity: 
+                    name: id
+                    data: 'jq(.secrets.SSHKEY)'
+                    mode: "0600"
+                  recursive: false
+                  verbose: false 
+        - title: Move data between two remote hosts.
+          content: |-
+            - id: scp
+              type: action
+              action:
+                function: scp
+                secrets:
+                - SSHKEY
+                input: 
+                  source: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
+                  target: "myuser@192.168.1.11:/home/myuser/Downloads/payload" 
+                  identity: 
+                    name: id
+                    data: 'jq(.secrets.SSHKEY)'
+                    mode: "0600"
+                  recursive: false
+                  verbose: false      
+      x-direktiv-secrets:
+        - name: sshkey
+          description: Plain string of an ssh key with permission to access remote hosts.
+      x-direktiv:  
+        cmds:
+        - action: exec
+          exec: |-
+             scp {{- if (deref .Verbose) }} -v {{- end }} -B {{- if (deref .Recursive) }} -r {{- end }} -i {{ .Identity.Name }} -o StrictHostKeyChecking=accept-new {{ .Source }} {{ .Target }}
+        output: |
+          {
+            "scp": {
+              "success": true
+            }
+          }
+      x-direktiv-errors:
+        io.direktiv.command.error: Command execution failed
+        io.direktiv.output.error: Template error for output generation of the service
+        io.direktiv.ri.error: Can not create information object from request
+      responses:
+        200:
+          description: List of executed commands.
+          examples:
+            scp:
+              success: true
+          schema:
+            type: object
+            properties:
+              scp:
+                type: object
+                required:
+                - success
+                properties:
+                  success:
+                    type: boolean
+        default:
+          description: generic error response
+          headers:
+            Direktiv-ErrorCode:
+              type: string
+            Direktiv-ErrorMessage:
+              type: string
+          schema:
+            $ref: "#/definitions/error"
+definitions:
+  direktivFile:
+    type: object
+    x-go-type:
+      type: DirektivFile
+      import:
+        package: github.com/direktiv/apps/go/pkg/apps 
+  error:
+    type: object
+    required:
+      - errorCode
+      - errorMessage
+    properties:
+      errorCode:
+        type: string
+      errorMessage:
+        type: string
