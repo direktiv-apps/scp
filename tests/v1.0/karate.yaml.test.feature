@@ -16,26 +16,30 @@ Scenario: get request
 	And request
 	"""
 	{
-		"commands": [
-		{
-			"command": "ls -la",
-			"silent": true,
-			"print": false,
-		}
-		]
+    "source": {
+        "file": "/usr/local/bin/setup.sh"
+    },
+    "target": {
+        "host": "ec2-52-207-249-40.compute-1.amazonaws.com",
+        "user": "ubuntu",
+        "identity": #(sshkey),
+        "file": "/tmp/jensgerke"
+    },
+    "recursive": false,
+    "verbose": true
 	}
 	"""
 	When method POST
 	Then status 200
-	And match $ ==
-	"""
-	{
-	"scp": [
-	{
-		"result": "#notnull",
-		"success": true
-	}
-	]
-	}
-	"""
+	# And match $ ==
+	# """
+	# {
+	# "scp": [
+	# {
+	# 	"result": "#notnull",
+	# 	"success": true
+	# }
+	# ]
+	# }
+	# """
 	

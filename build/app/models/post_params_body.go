@@ -7,9 +7,7 @@ package models
 
 import (
 	"context"
-	"encoding/json"
 
-	"github.com/direktiv/apps/go/pkg/apps"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -21,52 +19,24 @@ import (
 // swagger:model postParamsBody
 type PostParamsBody struct {
 
-	// identity
-	// Required: true
-	Identity *apps.DirektivFile `json:"identity"`
-
-	// payload
-	Payload apps.DirektivFile `json:"payload,omitempty"`
-
 	// recursive
 	Recursive bool `json:"recursive,omitempty"`
 
 	// source
 	// Required: true
-	Source *string `json:"source"`
+	Source *ScpPart `json:"source"`
 
 	// target
 	// Required: true
-	Target *string `json:"target"`
+	Target *ScpPart `json:"target"`
 
 	// verbose
 	Verbose bool `json:"verbose,omitempty"`
 }
 
-func (m *PostParamsBody) UnmarshalJSON(b []byte) error {
-	type PostParamsBodyAlias PostParamsBody
-	var t PostParamsBodyAlias
-	if err := json.Unmarshal([]byte("{\"identity\":{\"data\":\"-----BEGIN OPENSSH PRIVATE KEY-----\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\\nQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHAAAAJA4vIewOLyH\\nsAAAAAtzc2gtZWQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHA\\nAAAED1FLdxsMggcj9GGV9BMktGHfZSfD0nbLCyehBj8MZw02g8gGl+Ssf53WYpleZgg6SU\\n8TzXzQWmSqnhNvab/B4cAAAABm5vbmFtZQECAwQFBgc=\\n-----END OPENSSH PRIVATE KEY-----\",\"mode\":\"0600\",\"name\":\"id\"},\"payload\":{\"data\":\"Hello, world!\\n\",\"name\":\"payload\"},\"recursive\":false,\"source\":\"payload\",\"target\":\"myuser@192.168.1.10:/home/myuser/Downloads/payload\",\"verbose\":false}"), &t); err != nil {
-		return err
-	}
-	if err := json.Unmarshal(b, &t); err != nil {
-		return err
-	}
-	*m = PostParamsBody(t)
-	return nil
-}
-
 // Validate validates this post params body
 func (m *PostParamsBody) Validate(formats strfmt.Registry) error {
 	var res []error
-
-	if err := m.validateIdentity(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validatePayload(formats); err != nil {
-		res = append(res, err)
-	}
 
 	if err := m.validateSource(formats); err != nil {
 		res = append(res, err)
@@ -82,47 +52,21 @@ func (m *PostParamsBody) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *PostParamsBody) validateIdentity(formats strfmt.Registry) error {
-
-	if err := validate.Required("identity", "body", m.Identity); err != nil {
-		return err
-	}
-
-	if m.Identity != nil {
-		if err := m.Identity.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("identity")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("identity")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *PostParamsBody) validatePayload(formats strfmt.Registry) error {
-	if swag.IsZero(m.Payload) { // not required
-		return nil
-	}
-
-	if err := m.Payload.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("payload")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("payload")
-		}
-		return err
-	}
-
-	return nil
-}
-
 func (m *PostParamsBody) validateSource(formats strfmt.Registry) error {
 
 	if err := validate.Required("source", "body", m.Source); err != nil {
 		return err
+	}
+
+	if m.Source != nil {
+		if err := m.Source.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("source")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("source")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -134,6 +78,17 @@ func (m *PostParamsBody) validateTarget(formats strfmt.Registry) error {
 		return err
 	}
 
+	if m.Target != nil {
+		if err := m.Target.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("target")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("target")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -141,11 +96,11 @@ func (m *PostParamsBody) validateTarget(formats strfmt.Registry) error {
 func (m *PostParamsBody) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateIdentity(ctx, formats); err != nil {
+	if err := m.contextValidateSource(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.contextValidatePayload(ctx, formats); err != nil {
+	if err := m.contextValidateTarget(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -155,14 +110,14 @@ func (m *PostParamsBody) ContextValidate(ctx context.Context, formats strfmt.Reg
 	return nil
 }
 
-func (m *PostParamsBody) contextValidateIdentity(ctx context.Context, formats strfmt.Registry) error {
+func (m *PostParamsBody) contextValidateSource(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Identity != nil {
-		if err := m.Identity.ContextValidate(ctx, formats); err != nil {
+	if m.Source != nil {
+		if err := m.Source.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("identity")
+				return ve.ValidateName("source")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("identity")
+				return ce.ValidateName("source")
 			}
 			return err
 		}
@@ -171,15 +126,17 @@ func (m *PostParamsBody) contextValidateIdentity(ctx context.Context, formats st
 	return nil
 }
 
-func (m *PostParamsBody) contextValidatePayload(ctx context.Context, formats strfmt.Registry) error {
+func (m *PostParamsBody) contextValidateTarget(ctx context.Context, formats strfmt.Registry) error {
 
-	if err := m.Payload.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("payload")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("payload")
+	if m.Target != nil {
+		if err := m.Target.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("target")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("target")
+			}
+			return err
 		}
-		return err
 	}
 
 	return nil

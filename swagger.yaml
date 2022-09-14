@@ -58,40 +58,49 @@ paths:
             required:
               - source
               - target
-              - identity
+            #   - identity
             properties:
-              source: 
-                type: string 
+              source:
+                $ref: '#/definitions/scpPart'
               target:
-                type: string
-              identity:
-                $ref: '#/definitions/direktivFile'
-              payload:
-                $ref: '#/definitions/direktivFile'
+                $ref: '#/definitions/scpPart'
+                # type: object
+                # properties:
+                #   file: 
+                #     type: string
+
+
+              # target:
+              #   type: string
+              # identities:
+              #   type: array
+              #   items:
+              #     type: string
+              #     # $ref: '#/definitions/direktivFile'
+              # payload:
+              #   type: string
               recursive:
                 type: boolean
               verbose:
                 type: boolean
-            default: 
-              source: payload
-              target: "myuser@192.168.1.10:/home/myuser/Downloads/payload"
-              identity:
-                name: id
-                data: |-
-                  -----BEGIN OPENSSH PRIVATE KEY-----
-                  b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-                  QyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHAAAAJA4vIewOLyH
-                  sAAAAAtzc2gtZWQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHA
-                  AAAED1FLdxsMggcj9GGV9BMktGHfZSfD0nbLCyehBj8MZw02g8gGl+Ssf53WYpleZgg6SU
-                  8TzXzQWmSqnhNvab/B4cAAAABm5vbmFtZQECAwQFBgc=
-                  -----END OPENSSH PRIVATE KEY-----
+            # default: 
+            #   source: payload
+            #   target: "myuser@192.168.1.10:/home/myuser/Downloads/payload"
+            #   identity:
+            #     name: id
+            #     data: |-
+            #       -----BEGIN OPENSSH PRIVATE KEY-----
+            #       b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            #       QyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHAAAAJA4vIewOLyH
+            #       sAAAAAtzc2gtZWQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHA
+            #       AAAED1FLdxsMggcj9GGV9BMktGHfZSfD0nbLCyehBj8MZw02g8gGl+Ssf53WYpleZgg6SU
+            #       8TzXzQWmSqnhNvab/B4cAAAABm5vbmFtZQECAwQFBgc=
+            #       -----END OPENSSH PRIVATE KEY-----
                   
-                mode: "0600"
-              payload:
-                name: payload 
-                data: "Hello, world!\n"
-              recursive: false 
-              verbose: false
+            #     mode: "0400"
+            #   # payload:{{ $length := len .SearchData }}ld!\n"
+            #   recursive: false 
+            #   verbose: false
       x-direktiv-function: |-
         functions:
         - id: scp
@@ -179,14 +188,24 @@ paths:
       x-direktiv:  
         cmds:
         - action: exec
-          exec: |-
-             scp {{- if (deref .Verbose) }} -v {{- end }} -B {{- if (deref .Recursive) }} -r {{- end }} -i {{ .Identity.Name }} -o StrictHostKeyChecking=accept-new {{ .Source }} {{ .Target }}
-        output: |
-          {
-            "scp": {
-              "success": true
-            }
-          }
+          exec: setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'
+          print: false
+          silent: false
+        # - action: exe
+        #   exec: |-
+        #     {{- $length := len .Identities }}
+        #     {{- if gt $length 0 }}
+        #     setup.sh '{{ index .Identities 0 }}' {{- if gt $length 1 }} '{{ index .Identities 1 }}' {{- end }}
+        #     {{- end }}
+        # - action: exec
+        #   exec: |-
+        #      scp {{- if (deref .Verbose) }} -v {{- end }} -B {{- if (deref .Recursive) }} -r {{- end }} -i {{ .Identity.Name }} -o StrictHostKeyChecking=accept-new {{ .Source }} {{ .Target }}
+        # output: |
+        #   {
+        #     "scp": {
+        #       "success": true
+        #     }
+        #   }
       x-direktiv-errors:
         io.direktiv.command.error: Command execution failed
         io.direktiv.output.error: Template error for output generation of the service
@@ -233,3 +252,20 @@ definitions:
         type: string
       errorMessage:
         type: string
+
+  scpPart:
+    type: object
+    required: ["file"]
+    properties:
+      host:
+        type: string
+      port: 
+        type: integer
+        default: 22
+      user:
+        type: string
+      identity: 
+        type: string
+      file:
+        type: string
+        description: sjsjsj

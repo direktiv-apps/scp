@@ -17,7 +17,7 @@ import (
 	"app/restapi/operations"
 )
 
-//go:generate swagger generate server --target ../../app --name Scp --spec ../../../swagger.yaml --template-dir /home/alan/go/src/github.com/direktiv-apps/scp/build/templates --principal interface{}
+//go:generate swagger generate server --target ../../app --name Scp --spec ../../../swagger.yaml --template-dir /home/jensg/go/src/github.com/direktiv-apps/scp/build/templates --principal interface{}
 
 func configureFlags(api *operations.ScpAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }

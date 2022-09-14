@@ -67,41 +67,19 @@ func init() {
             "in": "body",
             "schema": {
               "type": "object",
-              "default": {
-                "identity": {
-                  "data": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHAAAAJA4vIewOLyH\nsAAAAAtzc2gtZWQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHA\nAAAED1FLdxsMggcj9GGV9BMktGHfZSfD0nbLCyehBj8MZw02g8gGl+Ssf53WYpleZgg6SU\n8TzXzQWmSqnhNvab/B4cAAAABm5vbmFtZQECAwQFBgc=\n-----END OPENSSH PRIVATE KEY-----",
-                  "mode": "0600",
-                  "name": "id"
-                },
-                "payload": {
-                  "data": "Hello, world!\n",
-                  "name": "payload"
-                },
-                "recursive": false,
-                "source": "payload",
-                "target": "myuser@192.168.1.10:/home/myuser/Downloads/payload",
-                "verbose": false
-              },
               "required": [
                 "source",
-                "target",
-                "identity"
+                "target"
               ],
               "properties": {
-                "identity": {
-                  "$ref": "#/definitions/direktivFile"
-                },
-                "payload": {
-                  "$ref": "#/definitions/direktivFile"
-                },
                 "recursive": {
                   "type": "boolean"
                 },
                 "source": {
-                  "type": "string"
+                  "$ref": "#/definitions/scpPart"
                 },
                 "target": {
-                  "type": "string"
+                  "$ref": "#/definitions/scpPart"
                 },
                 "verbose": {
                   "type": "boolean"
@@ -154,10 +132,9 @@ func init() {
           "cmds": [
             {
               "action": "exec",
-              "exec": "scp {{- if (deref .Verbose) }} -v {{- end }} -B {{- if (deref .Recursive) }} -r {{- end }} -i {{ .Identity.Name }} -o StrictHostKeyChecking=accept-new {{ .Source }} {{ .Target }}"
+              "exec": "setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'"
             }
-          ],
-          "output": "{\n  \"scp\": {\n    \"success\": true\n  }\n}\n"
+          ]
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
@@ -231,6 +208,31 @@ func init() {
           "type": "string"
         },
         "errorMessage": {
+          "type": "string"
+        }
+      }
+    },
+    "scpPart": {
+      "type": "object",
+      "required": [
+        "file"
+      ],
+      "properties": {
+        "file": {
+          "description": "sjsjsj",
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "identity": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "default": 22
+        },
+        "user": {
           "type": "string"
         }
       }
@@ -321,10 +323,9 @@ func init() {
           "cmds": [
             {
               "action": "exec",
-              "exec": "scp {{- if (deref .Verbose) }} -v {{- end }} -B {{- if (deref .Recursive) }} -r {{- end }} -i {{ .Identity.Name }} -o StrictHostKeyChecking=accept-new {{ .Source }} {{ .Target }}"
+              "exec": "setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'"
             }
-          ],
-          "output": "{\n  \"scp\": {\n    \"success\": true\n  }\n}\n"
+          ]
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
@@ -425,47 +426,50 @@ func init() {
     },
     "postParamsBody": {
       "type": "object",
-      "default": {
-        "identity": {
-          "data": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHAAAAJA4vIewOLyH\nsAAAAAtzc2gtZWQyNTUxOQAAACBoPIBpfkrH+d1mKZXmYIOklPE8180Fpkqp4Tb2m/weHA\nAAAED1FLdxsMggcj9GGV9BMktGHfZSfD0nbLCyehBj8MZw02g8gGl+Ssf53WYpleZgg6SU\n8TzXzQWmSqnhNvab/B4cAAAABm5vbmFtZQECAwQFBgc=\n-----END OPENSSH PRIVATE KEY-----",
-          "mode": "0600",
-          "name": "id"
-        },
-        "payload": {
-          "data": "Hello, world!\n",
-          "name": "payload"
-        },
-        "recursive": false,
-        "source": "payload",
-        "target": "myuser@192.168.1.10:/home/myuser/Downloads/payload",
-        "verbose": false
-      },
       "required": [
         "source",
-        "target",
-        "identity"
+        "target"
       ],
       "properties": {
-        "identity": {
-          "$ref": "#/definitions/direktivFile"
-        },
-        "payload": {
-          "$ref": "#/definitions/direktivFile"
-        },
         "recursive": {
           "type": "boolean"
         },
         "source": {
-          "type": "string"
+          "$ref": "#/definitions/scpPart"
         },
         "target": {
-          "type": "string"
+          "$ref": "#/definitions/scpPart"
         },
         "verbose": {
           "type": "boolean"
         }
       },
       "x-go-gen-location": "operations"
+    },
+    "scpPart": {
+      "type": "object",
+      "required": [
+        "file"
+      ],
+      "properties": {
+        "file": {
+          "description": "sjsjsj",
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "identity": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "default": 22
+        },
+        "user": {
+          "type": "string"
+        }
+      }
     }
   }
 }`))

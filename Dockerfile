@@ -19,9 +19,10 @@ FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install ca-certificates -y
 
-RUN apt-get install openssh-client -y
+RUN apt-get install openssh-client jq sshpass -y
 
-RUN which scp
+COPY setup.sh /usr/local/bin
+RUN chmod 755 /usr/local/bin/setup.sh
 
 # DON'T CHANGE BELOW 
 COPY --from=build /application /bin/application

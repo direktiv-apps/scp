@@ -2,6 +2,7 @@ package operations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -111,17 +112,10 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 	paramsCollector = append(paramsCollector, ret)
 	accParams.Commands = paramsCollector
 
-	s, err := templateString(`{
-  "scp": {
-    "success": true
-  }
-}
-`, responses)
+	responseBytes, err := json.Marshal(responses)
 	if err != nil {
 		return generateError(outErr, err)
 	}
-
-	responseBytes := []byte(s)
 
 	// validate
 	resp.UnmarshalBinary(responseBytes)
@@ -147,7 +141,7 @@ func runCommand0(ctx context.Context,
 		params.DirektivDir,
 	}
 
-	cmd, err := templateString(`scp {{- if (deref .Verbose) }} -v {{- end }} -B {{- if (deref .Recursive) }} -r {{- end }} -i {{ .Identity.Name }} -o StrictHostKeyChecking=accept-new {{ .Source }} {{ .Target }}`, at)
+	cmd, err := templateString(`setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'`, at)
 	if err != nil {
 		ri.Logger().Infof("error executing command: %v", err)
 		ir[resultKey] = err.Error()
