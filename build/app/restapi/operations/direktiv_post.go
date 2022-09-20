@@ -84,9 +84,7 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 	responses = append(responses, ret)
 
 	// if foreach returns an error there is no continue
-	//
-	// cont = false
-	//
+	cont = false
 
 	if err != nil && !cont {
 

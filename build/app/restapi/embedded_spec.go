@@ -36,7 +36,7 @@ func init() {
       "categories": [
         "network"
       ],
-      "container": "direktiv.azurecr.io/functions/scp",
+      "container": "gcr.io/direktiv/functions/scp",
       "issues": "https://github.com/direktiv-apps/scp/issues",
       "license": "[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)",
       "long-description": "This function enables to secure copy (SCP) between Direktiv and remote hosts or between two remote hosts. It is recommended to use SSH keys for authentication but  password authentication is supported for the source host.\nIf SCP is required between two remote hosts with password two SCP steps need to be executed. The first step copies the file to Direktiv and the second command copies it  remotely. \nAdditionally the files can be stroed in Direktiv's ` + "`" + `out` + "`" + ` folders to store them for later use, e.g. ` + "`" + `out/workflow/myfile` + "`" + ` would store the file in Direktiv's workflow scope. ",
@@ -183,7 +183,7 @@ func init() {
             "title": "Copy with password between remotes"
           }
         ],
-        "x-direktiv-function": "functions:\n- id: scp\n  image: direktiv.azurecr.io/functions/scp:1.0\n  type: knative-workflow",
+        "x-direktiv-function": "functions:\n- id: scp\n  image: gcr.io/direktiv/functions/scp:1.0\n  type: knative-workflow",
         "x-direktiv-secrets": [
           {
             "description": "SSH key for target or source. Each remote can have a key.",
@@ -294,7 +294,7 @@ func init() {
       "categories": [
         "network"
       ],
-      "container": "direktiv.azurecr.io/functions/scp",
+      "container": "gcr.io/direktiv/functions/scp",
       "issues": "https://github.com/direktiv-apps/scp/issues",
       "license": "[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)",
       "long-description": "This function enables to secure copy (SCP) between Direktiv and remote hosts or between two remote hosts. It is recommended to use SSH keys for authentication but  password authentication is supported for the source host.\nIf SCP is required between two remote hosts with password two SCP steps need to be executed. The first step copies the file to Direktiv and the second command copies it  remotely. \nAdditionally the files can be stroed in Direktiv's ` + "`" + `out` + "`" + ` folders to store them for later use, e.g. ` + "`" + `out/workflow/myfile` + "`" + ` would store the file in Direktiv's workflow scope. ",
@@ -394,7 +394,7 @@ func init() {
             "title": "Copy with password between remotes"
           }
         ],
-        "x-direktiv-function": "functions:\n- id: scp\n  image: direktiv.azurecr.io/functions/scp:1.0\n  type: knative-workflow",
+        "x-direktiv-function": "functions:\n- id: scp\n  image: gcr.io/direktiv/functions/scp:1.0\n  type: knative-workflow",
         "x-direktiv-secrets": [
           {
             "description": "SSH key for target or source. Each remote can have a key.",

@@ -5,7 +5,7 @@ Secure copy between hosts
 
 ---
 - #### Categories: network
-- #### Image: direktiv.azurecr.io/functions/scp 
+- #### Image: gcr.io/direktiv/functions/scp 
 - #### License: [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - #### Issue Tracking: https://github.com/direktiv-apps/scp/issues
 - #### URL: https://github.com/direktiv-apps/scp
@@ -23,7 +23,7 @@ Additionally the files can be stroed in Direktiv's `out` folders to store them f
 ```yaml
 functions:
 - id: scp
-  image: direktiv.azurecr.io/functions/scp:1.0
+  image: gcr.io/direktiv/functions/scp:1.0
   type: knative-workflow
 ```
    #### SCP local to remote with certificate

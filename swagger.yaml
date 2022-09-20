@@ -4,7 +4,7 @@ info:
   title: scp
   version: "1.0"
   x-direktiv-meta:
-    container: direktiv.azurecr.io/functions/scp
+    container: gcr.io/direktiv/functions/scp
     maintainer: |-
       [direktiv.io](https://www.direktiv.io) 
     issues: https://github.com/direktiv-apps/scp/issues
@@ -82,7 +82,7 @@ paths:
       x-direktiv-function: |-
         functions:
         - id: scp
-          image: direktiv.azurecr.io/functions/scp:1.0
+          image: gcr.io/direktiv/functions/scp:1.0
           type: knative-workflow
       x-direktiv-examples:
         - title: SCP local to remote with certificate

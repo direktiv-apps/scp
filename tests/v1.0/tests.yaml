@@ -2,7 +2,7 @@ url: ""
 functions:
 - type: knative-workflow
   id: scp
-  image: direktiv.azurecr.io/functions/scp:test
+  image: gcr.io/direktiv/functions/scp:test
 states:
 - id: state0
   type: action
