@@ -19,20 +19,23 @@ import (
 // swagger:model scpPart
 type ScpPart struct {
 
-	// sjsjsj
+	// File to copy. In target the Direktiv `out` folders can be used, e.g. `out/workflow/myfile` to store the file in workflow scope.
 	// Required: true
 	File *string `json:"file"`
 
-	// host
+	// Hostname of the target or source. Empty if local.
 	Host string `json:"host,omitempty"`
 
-	// identity
+	// SSH key for the target or source.
 	Identity string `json:"identity,omitempty"`
 
-	// port
+	// Password for target or source. Only the source host can use a password. SSH key recommended.
+	Password string `json:"password,omitempty"`
+
+	// Port of the target or source. Empty if local.
 	Port *int64 `json:"port,omitempty"`
 
-	// user
+	// User of the target or source.
 	User string `json:"user,omitempty"`
 }
 

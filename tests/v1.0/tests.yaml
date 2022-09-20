@@ -6,71 +6,89 @@ functions:
 states:
 - id: state0
   type: action
+  catch:
+  - error: io.direktiv.command.error
   action:
-    function: scp
+    function: get
     input:
-      identity:
-        data: jq(.secrets.SSHKEY)
-        mode: "0600"
-        name: id
-      payload:
-        data: Hello, world!\n
-        name: payload
-      recursive: false
-      source: payload
-      target: myuser@192.168.1.10:/home/myuser/Downloads/payload
-      verbose: false
+      scp:
+      - source:
+          file: payload
+        target:
+          file: /tmp/myfile
+          host: ec2-11-111-99-99.compute-1.amazonaws.com
+          identity: jq(.secrets.sshkey)
+          user: ubuntu
     secrets:
-    - SSHKEY
+    - sshkey
+    files:
+    - key: payload
+      scope: workflow
   transition: state1
 - id: state1
   type: action
   action:
-    function: scp
+    function: get
     input:
-      identity:
-        data: jq(.secrets.SSHKEY)
-        mode: "0600"
-        name: id
-      recursive: false
-      source: payload
-      target: myuser@192.168.1.10:/home/myuser/Downloads/payload
-      verbose: false
+      scp:
+      - source:
+          file: /tmp/hello1
+          host: ec2-11-111-99-99.compute-1.amazonaws.com
+          identity: jq(.secrets.sshkey)
+          user: ubuntu
+        target:
+          file: /tmp/myfile
+          host: ec2-11-111-99-100.compute-1.amazonaws.com
+          identity: jq(.secrets.sshkey)
+          user: ubuntu
     secrets:
-    - SSHKEY
-    files:
-    - key: payload
-      as: payload
-      scope: namespace
+    - sshkey
   transition: state2
 - id: state2
   type: action
   action:
-    function: scp
+    function: get
     input:
-      identity:
-        data: jq(.secrets.SSHKEY)
-        mode: "0600"
-        name: id
-      recursive: false
-      source: myuser@192.168.1.10:/home/myuser/Downloads/payload
-      target: payload
-      verbose: false
+      scp:
+      - source:
+          file: /tmp/hello1
+          host: ec2-11-111-99-99.compute-1.amazonaws.com
+          identity: jq(.secrets.sshkey)
+          user: ubuntu
+        target:
+          file: file1
+      - source:
+          file: file1
+        target:
+          file: /tmp/targetfile
+          host: 192.168.1.1
+          password: jq(.secrets.scppwd)
+          user: direktiv
     secrets:
-    - SSHKEY
+    - sshkey
+    - scppwd
+    files:
+    - key: whatever
+      as: payload
+      scope: workflow
   transition: state3
 - id: state3
   type: action
   action:
-    function: scp
+    function: get
     input:
-      identity:
-        data: jq(.secrets.SSHKEY)
-        mode: "0600"
-        name: id
-      recursive: false
-      source: myuser@192.168.1.10:/home/myuser/Downloads/payload
-      target: myuser@192.168.1.11:/home/myuser/Downloads/payload
-      verbose: false
+      scp:
+      - source:
+          file: /tmp/file
+          host: 10.100.6.8
+          password: jq(.secrets.scppwd)
+          user: direktiv
+        target:
+          file: out/workflow/myfile.txt
     secrets:
-    - SSHKEY
+    - scpkey
+    - scppwd
+    files:
+    - key: whatever
+      as: payload
+      scope: workflow

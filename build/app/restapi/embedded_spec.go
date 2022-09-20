@@ -29,17 +29,17 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Run scp in Direktiv",
+    "description": "Secure copy between hosts",
     "title": "scp",
     "version": "1.0",
     "x-direktiv-meta": {
       "categories": [
-        "unknown"
+        "network"
       ],
       "container": "direktiv.azurecr.io/functions/scp",
       "issues": "https://github.com/direktiv-apps/scp/issues",
       "license": "[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)",
-      "long-description": "Run scp in Direktiv as a function",
+      "long-description": "This function enables to secure copy (SCP) between Direktiv and remote hosts or between two remote hosts. It is recommended to use SSH keys for authentication but  password authentication is supported for the source host.\nIf SCP is required between two remote hosts with password two SCP steps need to be executed. The first step copies the file to Direktiv and the second command copies it  remotely. \nAdditionally the files can be stroed in Direktiv's ` + "`" + `out` + "`" + ` folders to store them for later use, e.g. ` + "`" + `out/workflow/myfile` + "`" + ` would store the file in Direktiv's workflow scope. ",
       "maintainer": "[direktiv.io](https://www.direktiv.io) ",
       "url": "https://github.com/direktiv-apps/scp"
     }
@@ -67,22 +67,31 @@ func init() {
             "in": "body",
             "schema": {
               "type": "object",
-              "required": [
-                "source",
-                "target"
-              ],
               "properties": {
-                "recursive": {
-                  "type": "boolean"
-                },
-                "source": {
-                  "$ref": "#/definitions/scpPart"
-                },
-                "target": {
-                  "$ref": "#/definitions/scpPart"
-                },
-                "verbose": {
-                  "type": "boolean"
+                "scp": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "source",
+                      "target"
+                    ],
+                    "properties": {
+                      "recursive": {
+                        "description": "Copy recursivley, e.g folders",
+                        "type": "boolean"
+                      },
+                      "source": {
+                        "$ref": "#/definitions/scpPart"
+                      },
+                      "target": {
+                        "$ref": "#/definitions/scpPart"
+                      },
+                      "verbose": {
+                        "description": "Show verbose output",
+                        "type": "boolean"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -90,27 +99,37 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "List of executed commands.",
+            "description": "List of executed scp commands.",
             "schema": {
               "type": "object",
               "properties": {
                 "scp": {
-                  "type": "object",
-                  "required": [
-                    "success"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "success",
+                      "result"
+                    ],
+                    "properties": {
+                      "result": {
+                        "additionalProperties": false
+                      },
+                      "success": {
+                        "type": "boolean"
+                      }
                     }
                   }
                 }
               }
             },
             "examples": {
-              "scp": {
-                "success": true
-              }
+              "scp": [
+                {
+                  "result": "copying from a to b",
+                  "success": true
+                }
+              ]
             }
           },
           "default": {
@@ -131,10 +150,15 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
-              "action": "exec",
-              "exec": "setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'"
+              "action": "foreach",
+              "continue": "{{ .Item.Continue }}",
+              "exec": "setup.sh '{{ .Item.Source | toJson }}' '{{ .Item.Target | toJson }}' '{{ .Item.Verbose | toJson }}' '{{ .Item.Recursive | toJson }}'",
+              "loop": ".Scp",
+              "print": false,
+              "silent": false
             }
-          ]
+          ],
+          "output": "{\n  \"scp\": {{ index . 0 | toJson }}\n}\n"
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
@@ -143,27 +167,31 @@ func init() {
         },
         "x-direktiv-examples": [
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    input: \n      source: payload \n      target: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      payload:\n        name: payload\n        data: 'Hello, world!\\n'\n      recursive: false\n      verbose: false",
-            "title": "Send payload from state data."
+            "content": "- id: scp1 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    files: \n    - key: payload\n      scope: workflow\n    function: get\n    input: \n      scp:\n      - source:\n          file: payload\n        target:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
+            "title": "SCP local to remote with certificate"
           },
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    files: \n    - key: payload\n      scope: namespace\n      as: payload\n    input: \n      source: payload \n      target: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      recursive: false\n      verbose: false",
-            "title": "Send payload from variable file."
+            "content": "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "title": "SCP remote to remote with certificate"
           },
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    input: \n      source: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      target: payload\n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      recursive: false\n      verbose: false ",
-            "title": "Get data from remote host and store in a variable file."
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "title": "Copy with password between remotes"
           },
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    input: \n      source: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      target: \"myuser@192.168.1.11:/home/myuser/Downloads/payload\" \n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      recursive: false\n      verbose: false      ",
-            "title": "Move data between two remote hosts."
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "title": "Copy with password between remotes"
           }
         ],
         "x-direktiv-function": "functions:\n- id: scp\n  image: direktiv.azurecr.io/functions/scp:1.0\n  type: knative-workflow",
         "x-direktiv-secrets": [
           {
-            "description": "Plain string of an ssh key with permission to access remote hosts.",
+            "description": "SSH key for target or source. Each remote can have a key.",
             "name": "sshkey"
+          },
+          {
+            "description": "Passwords are only allowed for the source of the involved hosts.",
+            "name": "scppwd"
           }
         ]
       },
@@ -219,20 +247,28 @@ func init() {
       ],
       "properties": {
         "file": {
-          "description": "sjsjsj",
+          "description": "File to copy. In target the Direktiv ` + "`" + `out` + "`" + ` folders can be used, e.g. ` + "`" + `out/workflow/myfile` + "`" + ` to store the file in workflow scope.",
           "type": "string"
         },
         "host": {
+          "description": "Hostname of the target or source. Empty if local.",
           "type": "string"
         },
         "identity": {
+          "description": "SSH key for the target or source.",
+          "type": "string"
+        },
+        "password": {
+          "description": "Password for target or source. Only the source host can use a password. SSH key recommended.",
           "type": "string"
         },
         "port": {
+          "description": "Port of the target or source. Empty if local.",
           "type": "integer",
           "default": 22
         },
         "user": {
+          "description": "User of the target or source.",
           "type": "string"
         }
       }
@@ -251,17 +287,17 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Run scp in Direktiv",
+    "description": "Secure copy between hosts",
     "title": "scp",
     "version": "1.0",
     "x-direktiv-meta": {
       "categories": [
-        "unknown"
+        "network"
       ],
       "container": "direktiv.azurecr.io/functions/scp",
       "issues": "https://github.com/direktiv-apps/scp/issues",
       "license": "[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)",
-      "long-description": "Run scp in Direktiv as a function",
+      "long-description": "This function enables to secure copy (SCP) between Direktiv and remote hosts or between two remote hosts. It is recommended to use SSH keys for authentication but  password authentication is supported for the source host.\nIf SCP is required between two remote hosts with password two SCP steps need to be executed. The first step copies the file to Direktiv and the second command copies it  remotely. \nAdditionally the files can be stroed in Direktiv's ` + "`" + `out` + "`" + ` folders to store them for later use, e.g. ` + "`" + `out/workflow/myfile` + "`" + ` would store the file in Direktiv's workflow scope. ",
       "maintainer": "[direktiv.io](https://www.direktiv.io) ",
       "url": "https://github.com/direktiv-apps/scp"
     }
@@ -294,14 +330,17 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "List of executed commands.",
+            "description": "List of executed scp commands.",
             "schema": {
               "$ref": "#/definitions/postOKBody"
             },
             "examples": {
-              "scp": {
-                "success": true
-              }
+              "scp": [
+                {
+                  "result": "copying from a to b",
+                  "success": true
+                }
+              ]
             }
           },
           "default": {
@@ -322,10 +361,15 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
-              "action": "exec",
-              "exec": "setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'"
+              "action": "foreach",
+              "continue": "{{ .Item.Continue }}",
+              "exec": "setup.sh '{{ .Item.Source | toJson }}' '{{ .Item.Target | toJson }}' '{{ .Item.Verbose | toJson }}' '{{ .Item.Recursive | toJson }}'",
+              "loop": ".Scp",
+              "print": false,
+              "silent": false
             }
-          ]
+          ],
+          "output": "{\n  \"scp\": {{ index . 0 | toJson }}\n}\n"
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
@@ -334,27 +378,31 @@ func init() {
         },
         "x-direktiv-examples": [
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    input: \n      source: payload \n      target: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      payload:\n        name: payload\n        data: 'Hello, world!\\n'\n      recursive: false\n      verbose: false",
-            "title": "Send payload from state data."
+            "content": "- id: scp1 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    files: \n    - key: payload\n      scope: workflow\n    function: get\n    input: \n      scp:\n      - source:\n          file: payload\n        target:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
+            "title": "SCP local to remote with certificate"
           },
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    files: \n    - key: payload\n      scope: namespace\n      as: payload\n    input: \n      source: payload \n      target: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      recursive: false\n      verbose: false",
-            "title": "Send payload from variable file."
+            "content": "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "title": "SCP remote to remote with certificate"
           },
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    input: \n      source: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      target: payload\n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      recursive: false\n      verbose: false ",
-            "title": "Get data from remote host and store in a variable file."
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "title": "Copy with password between remotes"
           },
           {
-            "content": "- id: scp\n  type: action\n  action:\n    function: scp\n    secrets:\n    - SSHKEY\n    input: \n      source: \"myuser@192.168.1.10:/home/myuser/Downloads/payload\" \n      target: \"myuser@192.168.1.11:/home/myuser/Downloads/payload\" \n      identity: \n        name: id\n        data: 'jq(.secrets.SSHKEY)'\n        mode: \"0600\"\n      recursive: false\n      verbose: false      ",
-            "title": "Move data between two remote hosts."
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "title": "Copy with password between remotes"
           }
         ],
         "x-direktiv-function": "functions:\n- id: scp\n  image: direktiv.azurecr.io/functions/scp:1.0\n  type: knative-workflow",
         "x-direktiv-secrets": [
           {
-            "description": "Plain string of an ssh key with permission to access remote hosts.",
+            "description": "SSH key for target or source. Each remote can have a key.",
             "name": "sshkey"
+          },
+          {
+            "description": "Passwords are only allowed for the source of the involved hosts.",
+            "name": "scppwd"
           }
         ]
       },
@@ -407,17 +455,24 @@ func init() {
       "type": "object",
       "properties": {
         "scp": {
-          "$ref": "#/definitions/postOKBodyScp"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/postOKBodyScpItems"
+          }
         }
       },
       "x-go-gen-location": "operations"
     },
-    "postOKBodyScp": {
+    "postOKBodyScpItems": {
       "type": "object",
       "required": [
-        "success"
+        "success",
+        "result"
       ],
       "properties": {
+        "result": {
+          "additionalProperties": false
+        },
         "success": {
           "type": "boolean"
         }
@@ -426,12 +481,24 @@ func init() {
     },
     "postParamsBody": {
       "type": "object",
+      "properties": {
+        "scp": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/postParamsBodyScpItems"
+          }
+        }
+      },
+      "x-go-gen-location": "operations"
+    },
+    "postParamsBodyScpItems": {
       "required": [
         "source",
         "target"
       ],
       "properties": {
         "recursive": {
+          "description": "Copy recursivley, e.g folders",
           "type": "boolean"
         },
         "source": {
@@ -441,6 +508,7 @@ func init() {
           "$ref": "#/definitions/scpPart"
         },
         "verbose": {
+          "description": "Show verbose output",
           "type": "boolean"
         }
       },
@@ -453,20 +521,28 @@ func init() {
       ],
       "properties": {
         "file": {
-          "description": "sjsjsj",
+          "description": "File to copy. In target the Direktiv ` + "`" + `out` + "`" + ` folders can be used, e.g. ` + "`" + `out/workflow/myfile` + "`" + ` to store the file in workflow scope.",
           "type": "string"
         },
         "host": {
+          "description": "Hostname of the target or source. Empty if local.",
           "type": "string"
         },
         "identity": {
+          "description": "SSH key for the target or source.",
+          "type": "string"
+        },
+        "password": {
+          "description": "Password for target or source. Only the source host can use a password. SSH key recommended.",
           "type": "string"
         },
         "port": {
+          "description": "Port of the target or source. Empty if local.",
           "type": "integer",
           "default": 22
         },
         "user": {
+          "description": "User of the target or source.",
           "type": "string"
         }
       }

@@ -29,7 +29,7 @@ func main() {
 
 	parser := flags.NewParser(server, flags.Default)
 	parser.ShortDescription = "scp"
-	parser.LongDescription = "Run scp in Direktiv"
+	parser.LongDescription = "Secure copy between hosts"
 	server.ConfigureFlags()
 	for _, optsGroup := range api.CommandLineOptionsGroups {
 		_, err := parser.AddGroup(optsGroup.ShortDescription, optsGroup.LongDescription, optsGroup.Options)

@@ -2,7 +2,7 @@
 
 // Package restapi scp
 //
-//  Run scp in Direktiv
+//  Secure copy between hosts
 //  Schemes:
 //    http
 //  Host: localhost

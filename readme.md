@@ -1,10 +1,10 @@
 
 # scp 1.0
 
-Run scp in Direktiv
+Secure copy between hosts
 
 ---
-- #### Categories: unknown
+- #### Categories: network
 - #### Image: direktiv.azurecr.io/functions/scp 
 - #### License: [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - #### Issue Tracking: https://github.com/direktiv-apps/scp/issues
@@ -14,7 +14,9 @@ Run scp in Direktiv
 
 ## About scp
 
-Run scp in Direktiv as a function
+This function enables to secure copy (SCP) between Direktiv and remote hosts or between two remote hosts. It is recommended to use SSH keys for authentication but  password authentication is supported for the source host.
+If SCP is required between two remote hosts with password two SCP steps need to be executed. The first step copies the file to Direktiv and the second command copies it  remotely. 
+Additionally the files can be stroed in Direktiv's `out` folders to store them for later use, e.g. `out/workflow/myfile` would store the file in Direktiv's workflow scope. 
 
 ### Example(s)
   #### Function Configuration
@@ -24,90 +26,109 @@ functions:
   image: direktiv.azurecr.io/functions/scp:1.0
   type: knative-workflow
 ```
-   #### Send payload from state data.
+   #### SCP local to remote with certificate
 ```yaml
-- id: scp
+- id: scp1 
   type: action
   action:
-    function: scp
-    secrets:
-    - SSHKEY
-    input: 
-      source: payload 
-      target: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
-      identity: 
-        name: id
-        data: 'jq(.secrets.SSHKEY)'
-        mode: "0600"
-      payload:
-        name: payload
-        data: 'Hello, world!\n'
-      recursive: false
-      verbose: false
-```
-   #### Send payload from variable file.
-```yaml
-- id: scp
-  type: action
-  action:
-    function: scp
-    secrets:
-    - SSHKEY
+    secrets: ["sshkey"]
     files: 
     - key: payload
-      scope: namespace
+      scope: workflow
+    function: get
+    input: 
+      scp:
+      - source:
+          file: payload
+        target:
+          host: ec2-11-111-99-99.compute-1.amazonaws.com
+          user: ubuntu
+          identity: jq(.secrets.sshkey)
+          file: /tmp/myfile
+  catch:
+  - error: "io.direktiv.command.error"
+```
+   #### SCP remote to remote with certificate
+```yaml
+- id: scp2 
+  type: action
+  action:
+    secrets: ["sshkey"]
+    function: get
+    input: 
+      scp:
+      - source:
+          host: ec2-11-111-99-99.compute-1.amazonaws.com
+          user: ubuntu
+          identity: jq(.secrets.sshkey)
+          file: /tmp/hello1
+        target:
+          host: ec2-11-111-99-100.compute-1.amazonaws.com
+          user: ubuntu
+          identity: jq(.secrets.sshkey)
+          file: /tmp/myfile
+    catch:
+    - error: "io.direktiv.command.error"
+```
+   #### Copy with password between remotes
+```yaml
+- id: getter 
+  type: action
+  action:
+    secrets: ["sshkey", "scppwd"]
+    files: 
+    - key: whatever
+      scope: workflow
       as: payload
+    function: get
     input: 
-      source: payload 
-      target: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
-      identity: 
-        name: id
-        data: 'jq(.secrets.SSHKEY)'
-        mode: "0600"
-      recursive: false
-      verbose: false
+      scp:
+      - source:
+          host: ec2-11-111-99-99.compute-1.amazonaws.com
+          user: ubuntu
+          identity: jq(.secrets.sshkey)
+          file: /tmp/hello1
+        target:
+          file: file1
+      - source:
+          file: file1
+        target:
+          host: 192.168.1.1
+          user: direktiv
+          password: jq(.secrets.scppwd)
+          file: /tmp/targetfile
+    catch:
+    - error: "io.direktiv.command.error"
 ```
-   #### Get data from remote host and store in a variable file.
+   #### Copy with password between remotes
 ```yaml
-- id: scp
+- id: getter 
   type: action
   action:
-    function: scp
-    secrets:
-    - SSHKEY
+    secrets: ["scpkey", "scppwd"]
+    files: 
+    - key: whatever
+      scope: workflow
+      as: payload
+    function: get
     input: 
-      source: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
-      target: payload
-      identity: 
-        name: id
-        data: 'jq(.secrets.SSHKEY)'
-        mode: "0600"
-      recursive: false
-      verbose: false 
-```
-   #### Move data between two remote hosts.
-```yaml
-- id: scp
-  type: action
-  action:
-    function: scp
-    secrets:
-    - SSHKEY
-    input: 
-      source: "myuser@192.168.1.10:/home/myuser/Downloads/payload" 
-      target: "myuser@192.168.1.11:/home/myuser/Downloads/payload" 
-      identity: 
-        name: id
-        data: 'jq(.secrets.SSHKEY)'
-        mode: "0600"
-      recursive: false
-      verbose: false      
+      scp:
+      - source:
+          host: 10.100.6.8
+          user: direktiv
+          password: jq(.secrets.scppwd)
+          file: /tmp/file
+        target:
+          file: out/workflow/myfile.txt
+    catch:
+    - error: "io.direktiv.command.error"
 ```
 
    ### Secrets
 
 
-- **sshkey**: Plain string of an ssh key with permission to access remote hosts.
+- **sshkey**: SSH key for target or source. Each remote can have a key.
+- **scppwd**: Passwords are only allowed for the source of the involved hosts.
 
 
 
@@ -122,7 +143,7 @@ functions:
 [PostParamsBody](#post-params-body)
 
 ### Response
-  List of executed commands.
+  List of executed scp commands.
 #### Reponse Types
     
   
@@ -131,9 +152,12 @@ functions:
 #### Example Reponses
     
 ```json
-{
-  "success": true
-}
+[
+  {
+    "result": "copying from a to b",
+    "success": true
+  }
+]
 ```
 
 ### Errors
@@ -155,10 +179,10 @@ functions:
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| scp | [PostOKBodyScp](#post-o-k-body-scp)| `PostOKBodyScp` |  | |  |  |
+| scp | [][PostOKBodyScpItems](#post-o-k-body-scp-items)| `[]*PostOKBodyScpItems` |  | |  |  |
 
 
-#### <span id="post-o-k-body-scp"></span> postOKBodyScp
+#### <span id="post-o-k-body-scp-items"></span> postOKBodyScpItems
 
   
 
@@ -168,6 +192,7 @@ functions:
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| result | [interface{}](#interface)| `interface{}` | ✓ | |  |  |
 | success | boolean| `bool` | ✓ | |  |  |
 
 
@@ -181,11 +206,40 @@ functions:
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| identity | [DirektivFile](#direktiv-file)| `apps.DirektivFile` | ✓ | |  |  |
-| payload | [DirektivFile](#direktiv-file)| `apps.DirektivFile` |  | |  |  |
-| recursive | boolean| `bool` |  | |  |  |
-| source | string| `string` | ✓ | |  |  |
-| target | string| `string` | ✓ | |  |  |
-| verbose | boolean| `bool` |  | |  |  |
+| scp | [][PostParamsBodyScpItems](#post-params-body-scp-items)| `[]*PostParamsBodyScpItems` |  | |  |  |
+
+
+#### <span id="post-params-body-scp-items"></span> postParamsBodyScpItems
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| recursive | boolean| `bool` |  | | Copy recursivley, e.g folders |  |
+| source | [ScpPart](#scp-part)| `ScpPart` | ✓ | |  |  |
+| target | [ScpPart](#scp-part)| `ScpPart` | ✓ | |  |  |
+| verbose | boolean| `bool` |  | | Show verbose output |  |
+
+
+#### <span id="scp-part"></span> scpPart
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| file | string| `string` | ✓ | | File to copy. In target the Direktiv `out` folders can be used, e.g. `out/workflow/myfile` to store the file in workflow scope. |  |
+| host | string| `string` |  | | Hostname of the target or source. Empty if local. |  |
+| identity | string| `string` |  | | SSH key for the target or source. |  |
+| password | string| `string` |  | | Password for target or source. Only the source host can use a password. SSH key recommended. |  |
+| port | integer| `int64` |  | `22`| Port of the target or source. Empty if local. |  |
+| user | string| `string` |  | | User of the target or source. |  |
 
  

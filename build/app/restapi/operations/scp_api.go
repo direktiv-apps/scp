@@ -51,7 +51,7 @@ func NewScpAPI(spec *loads.Document) *ScpAPI {
 	}
 }
 
-/*ScpAPI Run scp in Direktiv */
+/*ScpAPI Secure copy between hosts */
 type ScpAPI struct {
 	spec            *loads.Document
 	context         *middleware.Context

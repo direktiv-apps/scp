@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -19,7 +20,7 @@ import (
 type PostOKBody struct {
 
 	// scp
-	Scp *PostOKBodyScp `json:"scp,omitempty"`
+	Scp []*PostOKBodyScpItems `json:"scp"`
 }
 
 // Validate validates this post o k body
@@ -41,15 +42,22 @@ func (m *PostOKBody) validateScp(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if m.Scp != nil {
-		if err := m.Scp.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("scp")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("scp")
-			}
-			return err
+	for i := 0; i < len(m.Scp); i++ {
+		if swag.IsZero(m.Scp[i]) { // not required
+			continue
 		}
+
+		if m.Scp[i] != nil {
+			if err := m.Scp[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("scp" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("scp" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -71,15 +79,19 @@ func (m *PostOKBody) ContextValidate(ctx context.Context, formats strfmt.Registr
 
 func (m *PostOKBody) contextValidateScp(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Scp != nil {
-		if err := m.Scp.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("scp")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("scp")
+	for i := 0; i < len(m.Scp); i++ {
+
+		if m.Scp[i] != nil {
+			if err := m.Scp[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("scp" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("scp" + "." + strconv.Itoa(i))
+				}
+				return err
 			}
-			return err
 		}
+
 	}
 
 	return nil

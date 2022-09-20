@@ -2,9 +2,7 @@ package operations
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/direktiv/apps/go/pkg/apps"
@@ -87,9 +85,7 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 
 	// if foreach returns an error there is no continue
 	//
-	// default we do not continue
-	cont = convertTemplateToBool("<no value>", accParams, false)
-	// cont = convertTemplateToBool("<no value>", accParams, true)
+	// cont = false
 	//
 
 	if err != nil && !cont {
@@ -112,10 +108,15 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 	paramsCollector = append(paramsCollector, ret)
 	accParams.Commands = paramsCollector
 
-	responseBytes, err := json.Marshal(responses)
+	s, err := templateString(`{
+  "scp": {{ index . 0 | toJson }}
+}
+`, responses)
 	if err != nil {
 		return generateError(outErr, err)
 	}
+
+	responseBytes := []byte(s)
 
 	// validate
 	resp.UnmarshalBinary(responseBytes)
@@ -128,34 +129,65 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 	return NewPostOK().WithPayload(resp)
 }
 
-// exec
+// foreach command
+type LoopStruct0 struct {
+	accParams
+	Item        interface{}
+	DirektivDir string
+}
+
 func runCommand0(ctx context.Context,
-	params accParams, ri *apps.RequestInfo) (map[string]interface{}, error) {
+	params accParams, ri *apps.RequestInfo) ([]map[string]interface{}, error) {
 
-	ir := make(map[string]interface{})
-	ir[successKey] = false
+	var cmds []map[string]interface{}
 
-	at := accParamsTemplate{
-		*params.Body,
-		params.Commands,
-		params.DirektivDir,
+	if params.Body == nil {
+		return cmds, nil
 	}
 
-	cmd, err := templateString(`setup.sh '{{ .Source | toJson }}' '{{ .Target | toJson }}'`, at)
-	if err != nil {
-		ri.Logger().Infof("error executing command: %v", err)
-		ir[resultKey] = err.Error()
-		return ir, err
+	for a := range params.Body.Scp {
+
+		ls := &LoopStruct0{
+			params,
+			params.Body.Scp[a],
+			params.DirektivDir,
+		}
+
+		cmd, err := templateString(`setup.sh '{{ .Item.Source | toJson }}' '{{ .Item.Target | toJson }}' '{{ .Item.Verbose | toJson }}' '{{ .Item.Recursive | toJson }}'`, ls)
+		if err != nil {
+			ir := make(map[string]interface{})
+			ir[successKey] = false
+			ir[resultKey] = err.Error()
+			cmds = append(cmds, ir)
+			continue
+		}
+
+		silent := convertTemplateToBool("false", ls, false)
+		print := convertTemplateToBool("false", ls, true)
+		cont := convertTemplateToBool("{{ .Item.Continue }}", ls, false)
+		output := ""
+
+		envs := []string{}
+
+		r, err := runCmd(ctx, cmd, envs, output, silent, print, ri)
+		if err != nil {
+			ir := make(map[string]interface{})
+			ir[successKey] = false
+			ir[resultKey] = err.Error()
+			cmds = append(cmds, ir)
+
+			if cont {
+				continue
+			}
+
+			return cmds, err
+
+		}
+		cmds = append(cmds, r)
+
 	}
-	cmd = strings.Replace(cmd, "\n", "", -1)
 
-	silent := convertTemplateToBool("<no value>", at, false)
-	print := convertTemplateToBool("<no value>", at, true)
-	output := ""
-
-	envs := []string{}
-
-	return runCmd(ctx, cmd, envs, output, silent, print, ri)
+	return cmds, nil
 
 }
 

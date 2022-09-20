@@ -7,11 +7,11 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // PostParamsBody post params body
@@ -19,30 +19,15 @@ import (
 // swagger:model postParamsBody
 type PostParamsBody struct {
 
-	// recursive
-	Recursive bool `json:"recursive,omitempty"`
-
-	// source
-	// Required: true
-	Source *ScpPart `json:"source"`
-
-	// target
-	// Required: true
-	Target *ScpPart `json:"target"`
-
-	// verbose
-	Verbose bool `json:"verbose,omitempty"`
+	// scp
+	Scp []*PostParamsBodyScpItems `json:"scp"`
 }
 
 // Validate validates this post params body
 func (m *PostParamsBody) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateSource(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateTarget(formats); err != nil {
+	if err := m.validateScp(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -52,41 +37,27 @@ func (m *PostParamsBody) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *PostParamsBody) validateSource(formats strfmt.Registry) error {
-
-	if err := validate.Required("source", "body", m.Source); err != nil {
-		return err
+func (m *PostParamsBody) validateScp(formats strfmt.Registry) error {
+	if swag.IsZero(m.Scp) { // not required
+		return nil
 	}
 
-	if m.Source != nil {
-		if err := m.Source.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("source")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("source")
-			}
-			return err
+	for i := 0; i < len(m.Scp); i++ {
+		if swag.IsZero(m.Scp[i]) { // not required
+			continue
 		}
-	}
 
-	return nil
-}
-
-func (m *PostParamsBody) validateTarget(formats strfmt.Registry) error {
-
-	if err := validate.Required("target", "body", m.Target); err != nil {
-		return err
-	}
-
-	if m.Target != nil {
-		if err := m.Target.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("target")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("target")
+		if m.Scp[i] != nil {
+			if err := m.Scp[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("scp" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("scp" + "." + strconv.Itoa(i))
+				}
+				return err
 			}
-			return err
 		}
+
 	}
 
 	return nil
@@ -96,11 +67,7 @@ func (m *PostParamsBody) validateTarget(formats strfmt.Registry) error {
 func (m *PostParamsBody) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateSource(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateTarget(ctx, formats); err != nil {
+	if err := m.contextValidateScp(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -110,33 +77,21 @@ func (m *PostParamsBody) ContextValidate(ctx context.Context, formats strfmt.Reg
 	return nil
 }
 
-func (m *PostParamsBody) contextValidateSource(ctx context.Context, formats strfmt.Registry) error {
+func (m *PostParamsBody) contextValidateScp(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Source != nil {
-		if err := m.Source.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("source")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("source")
+	for i := 0; i < len(m.Scp); i++ {
+
+		if m.Scp[i] != nil {
+			if err := m.Scp[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("scp" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("scp" + "." + strconv.Itoa(i))
+				}
+				return err
 			}
-			return err
 		}
-	}
 
-	return nil
-}
-
-func (m *PostParamsBody) contextValidateTarget(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.Target != nil {
-		if err := m.Target.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("target")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("target")
-			}
-			return err
-		}
 	}
 
 	return nil

@@ -1,7 +1,23 @@
 #!/bin/bash
 
+verbose=""
+if [ $3 = true ] 
+then
+ verbose="-v"
+fi
 
-echo "ssssss" > payload
+
+# fail if both passwords are set
+pwd1=`echo $1 | jq -r .password`
+pwd2=`echo $2 | jq -r .password`
+
+if ([ -v "$pwd1" ] || [ ! "$pwd1" = "null" ]) && ([ -v "$pwd2" ] || [ ! "$pwd2" = "null" ])
+then 
+    echo "SCP with remote source and target using password not supported. Two step process is required with copying file to local first."
+    exit 1
+fi
+
+
 
 mkdir -p .ssh && chmod 700 .ssh
 touch .ssh/config
@@ -55,6 +71,16 @@ read var3 var4 < <(handle "$2" host2)
 
 echo "copying from $var2 to $var4"
 
-scp -o StrictHostKeyChecking=accept-new -F .ssh/config $var1 $var3
+# check if one has a password
+if [ -v "$pwd1" ] || [ ! "$pwd1" = "null" ]
+then 
+    sshpass -p "$pwd1" scp $verbose -o StrictHostKeyChecking=accept-new -F .ssh/config $var1 $var3
+elif [ -v "$pwd2" ] || [ ! "$pwd2" = "null" ]
+then
+    sshpass -p "$pwd2" scp $verbose -o StrictHostKeyChecking=accept-new -F .ssh/config $var1 $var3
+else
+    scp $verbose -o StrictHostKeyChecking=accept-new -F .ssh/config $var1 $var3
+fi
+
 
 
