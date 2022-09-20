@@ -9,11 +9,11 @@ states:
   catch:
   - error: io.direktiv.command.error
   action:
-    function: get
+    function: scp
     input:
       scp:
       - source:
-          file: payload
+          file: payload.txt
         target:
           file: /tmp/myfile
           host: ec2-11-111-99-99.compute-1.amazonaws.com
@@ -22,7 +22,7 @@ states:
     secrets:
     - sshkey
     files:
-    - key: payload
+    - key: payload.txt
       scope: workflow
   transition: state1
 - id: state1
@@ -30,7 +30,7 @@ states:
   catch:
   - error: io.direktiv.command.error
   action:
-    function: get
+    function: scp
     input:
       scp:
       - source:
@@ -51,7 +51,7 @@ states:
   catch:
   - error: io.direktiv.command.error
   action:
-    function: get
+    function: scp
     input:
       scp:
       - source:
@@ -71,17 +71,13 @@ states:
     secrets:
     - sshkey
     - scppwd
-    files:
-    - key: whatever
-      as: payload
-      scope: workflow
   transition: state3
 - id: state3
   type: action
   catch:
   - error: io.direktiv.command.error
   action:
-    function: get
+    function: scp
     input:
       scp:
       - source:
@@ -94,7 +90,3 @@ states:
     secrets:
     - scpkey
     - scppwd
-    files:
-    - key: whatever
-      as: payload
-      scope: workflow

@@ -33,13 +33,13 @@ functions:
   action:
     secrets: ["sshkey"]
     files: 
-    - key: payload
+    - key: payload.txt
       scope: workflow
-    function: get
+    function: scp
     input: 
       scp:
       - source:
-          file: payload
+          file: payload.txt
         target:
           host: ec2-11-111-99-99.compute-1.amazonaws.com
           user: ubuntu
@@ -54,7 +54,7 @@ functions:
   type: action
   action:
     secrets: ["sshkey"]
-    function: get
+    function: scp
     input: 
       scp:
       - source:
@@ -76,11 +76,7 @@ functions:
   type: action
   action:
     secrets: ["sshkey", "scppwd"]
-    files: 
-    - key: whatever
-      scope: workflow
-      as: payload
-    function: get
+    function: scp
     input: 
       scp:
       - source:
@@ -106,11 +102,7 @@ functions:
   type: action
   action:
     secrets: ["scpkey", "scppwd"]
-    files: 
-    - key: whatever
-      scope: workflow
-      as: payload
-    function: get
+    function: scp
     input: 
       scp:
       - source:
