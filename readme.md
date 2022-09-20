@@ -67,8 +67,8 @@ functions:
           user: ubuntu
           identity: jq(.secrets.sshkey)
           file: /tmp/myfile
-    catch:
-    - error: "io.direktiv.command.error"
+  catch:
+  - error: "io.direktiv.command.error"
 ```
    #### Copy with password between remotes
 ```yaml
@@ -97,8 +97,8 @@ functions:
           user: direktiv
           password: jq(.secrets.scppwd)
           file: /tmp/targetfile
-    catch:
-    - error: "io.direktiv.command.error"
+  catch:
+  - error: "io.direktiv.command.error"
 ```
    #### Copy with password between remotes
 ```yaml
@@ -120,8 +120,8 @@ functions:
           file: /tmp/file
         target:
           file: out/workflow/myfile.txt
-    catch:
-    - error: "io.direktiv.command.error"
+  catch:
+  - error: "io.direktiv.command.error"
 ```
 
    ### Secrets

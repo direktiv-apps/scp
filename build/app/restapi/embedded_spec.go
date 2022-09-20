@@ -171,15 +171,15 @@ func init() {
             "title": "SCP local to remote with certificate"
           },
           {
-            "content": "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "content": "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
             "title": "SCP remote to remote with certificate"
           },
           {
-            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
             "title": "Copy with password between remotes"
           },
           {
-            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n  catch:\n  - error: \"io.direktiv.command.error\"",
             "title": "Copy with password between remotes"
           }
         ],
@@ -382,15 +382,15 @@ func init() {
             "title": "SCP local to remote with certificate"
           },
           {
-            "content": "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "content": "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"]\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/myfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
             "title": "SCP remote to remote with certificate"
           },
           {
-            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
             "title": "Copy with password between remotes"
           },
           {
-            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n    catch:\n    - error: \"io.direktiv.command.error\"",
+            "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    files: \n    - key: whatever\n      scope: workflow\n      as: payload\n    function: get\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n  catch:\n  - error: \"io.direktiv.command.error\"",
             "title": "Copy with password between remotes"
           }
         ],

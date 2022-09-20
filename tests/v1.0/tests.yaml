@@ -27,6 +27,8 @@ states:
   transition: state1
 - id: state1
   type: action
+  catch:
+  - error: io.direktiv.command.error
   action:
     function: get
     input:
@@ -46,6 +48,8 @@ states:
   transition: state2
 - id: state2
   type: action
+  catch:
+  - error: io.direktiv.command.error
   action:
     function: get
     input:
@@ -74,6 +78,8 @@ states:
   transition: state3
 - id: state3
   type: action
+  catch:
+  - error: io.direktiv.command.error
   action:
     function: get
     input:

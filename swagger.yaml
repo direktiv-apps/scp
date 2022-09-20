@@ -125,8 +125,8 @@ paths:
                       user: ubuntu
                       identity: jq(.secrets.sshkey)
                       file: /tmp/myfile
-                catch:
-                - error: "io.direktiv.command.error"
+              catch:
+              - error: "io.direktiv.command.error"
         - title: Copy with password between remotes
           content: |-
             - id: getter 
@@ -154,8 +154,8 @@ paths:
                       user: direktiv
                       password: jq(.secrets.scppwd)
                       file: /tmp/targetfile
-                catch:
-                - error: "io.direktiv.command.error"
+              catch:
+              - error: "io.direktiv.command.error"
         - title: Copy with password between remotes
           content: |-
             - id: getter 
@@ -176,8 +176,8 @@ paths:
                       file: /tmp/file
                     target:
                       file: out/workflow/myfile.txt
-                catch:
-                - error: "io.direktiv.command.error"
+              catch:
+              - error: "io.direktiv.command.error"
       x-direktiv-secrets:
         - name: sshkey
           description: SSH key for target or source. Each remote can have a key. 
