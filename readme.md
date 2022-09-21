@@ -70,7 +70,7 @@ functions:
   catch:
   - error: "io.direktiv.command.error"
 ```
-   #### Copy with password between remotes
+   #### Copy with password between remotes with ssh key and password
 ```yaml
 - id: getter 
   type: action
@@ -96,7 +96,7 @@ functions:
   catch:
   - error: "io.direktiv.command.error"
 ```
-   #### Copy with password between remotes
+   #### Copy from remote to Direktiv variable
 ```yaml
 - id: getter 
   type: action

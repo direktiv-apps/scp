@@ -127,7 +127,7 @@ paths:
                       file: /tmp/myfile
               catch:
               - error: "io.direktiv.command.error"
-        - title: Copy with password between remotes
+        - title: Copy with password between remotes with ssh key and password
           content: |-
             - id: getter 
               type: action
@@ -152,7 +152,7 @@ paths:
                       file: /tmp/targetfile
               catch:
               - error: "io.direktiv.command.error"
-        - title: Copy with password between remotes
+        - title: Copy from remote to Direktiv variable
           content: |-
             - id: getter 
               type: action

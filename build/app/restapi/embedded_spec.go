@@ -176,11 +176,11 @@ func init() {
           },
           {
             "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    function: scp\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
-            "title": "Copy with password between remotes"
+            "title": "Copy with password between remotes with ssh key and password"
           },
           {
             "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    function: scp\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n  catch:\n  - error: \"io.direktiv.command.error\"",
-            "title": "Copy with password between remotes"
+            "title": "Copy from remote to Direktiv variable"
           }
         ],
         "x-direktiv-function": "functions:\n- id: scp\n  image: gcr.io/direktiv/functions/scp:1.0\n  type: knative-workflow",
@@ -387,11 +387,11 @@ func init() {
           },
           {
             "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\", \"scppwd\"]\n    function: scp\n    input: \n      scp:\n      - source:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n        target:\n          file: file1\n      - source:\n          file: file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n  catch:\n  - error: \"io.direktiv.command.error\"",
-            "title": "Copy with password between remotes"
+            "title": "Copy with password between remotes with ssh key and password"
           },
           {
             "content": "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\", \"scppwd\"]\n    function: scp\n    input: \n      scp:\n      - source:\n          host: 10.100.6.8\n          user: direktiv\n          password: jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n          file: out/workflow/myfile.txt\n  catch:\n  - error: \"io.direktiv.command.error\"",
-            "title": "Copy with password between remotes"
+            "title": "Copy from remote to Direktiv variable"
           }
         ],
         "x-direktiv-function": "functions:\n- id: scp\n  image: gcr.io/direktiv/functions/scp:1.0\n  type: knative-workflow",
