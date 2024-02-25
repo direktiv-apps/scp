@@ -1,0 +1,207 @@
+openapi: 3.0.1
+info:
+  title: scp
+  description: Secure copy between hosts
+  version: "1.0"
+  x-direktiv-meta:
+    container: gcr.io/direktiv/functions/scp
+    maintainer: "[direktiv.io](https://www.direktiv.io) "
+    issues: https://github.com/direktiv-apps/scp/issues
+    url: https://github.com/direktiv-apps/scp
+    categories:
+    - network
+    license: "[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)"
+    long-description: "This function enables to secure copy (SCP) between Direktiv\
+      \ and remote hosts or between two remote hosts. It is recommended to use SSH\
+      \ keys for authentication but  password authentication is supported for the\
+      \ source host.\nIf SCP is required between two remote hosts with password two\
+      \ SCP steps need to be executed. The first step copies the file to Direktiv\
+      \ and the second command copies it  remotely. \nAdditionally the files can be\
+      \ stroed in Direktiv's `out` folders to store them for later use, e.g. `out/workflow/myfile`\
+      \ would store the file in Direktiv's workflow scope. "
+servers:
+- url: /
+paths:
+  /:
+    post:
+      parameters:
+      - name: Direktiv-ActionID
+        in: header
+        description: "direktiv action id is an UUID. \nFor development it can be set\
+          \ to 'development'\n"
+        schema:
+          type: string
+          default: development
+      - name: Direktiv-TempDir
+        in: header
+        description: |
+          direktiv temp dir is the working directory for that request
+          For development it can be set to e.g. '/tmp'
+        schema:
+          type: string
+          default: /tmp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scp:
+                  type: array
+                  items:
+                    required:
+                    - source
+                    - target
+                    type: object
+                    properties:
+                      source:
+                        $ref: '#/components/schemas/scpPart'
+                      target:
+                        $ref: '#/components/schemas/scpPart'
+                      recursive:
+                        type: boolean
+                        description: "Copy recursivley, e.g folders"
+                      verbose:
+                        type: boolean
+                        description: Show verbose output
+        required: false
+      responses:
+        "200":
+          description: List of executed scp commands.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scp:
+                    type: array
+                    items:
+                      required:
+                      - result
+                      - success
+                      type: object
+                      properties:
+                        success:
+                          type: boolean
+                        result:
+                          type: object
+            scp:
+              example:
+              - result: copying from a to b
+                success: true
+        default:
+          description: generic error response
+          headers:
+            Direktiv-ErrorMessage:
+              schema:
+                type: string
+            Direktiv-ErrorCode:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      x-direktiv-function: |-
+        functions:
+        - id: scp
+          image: gcr.io/direktiv/functions/scp:1.0
+          type: knative-workflow
+      x-direktiv-examples:
+      - title: SCP local to remote with certificate
+        content: "- id: scp1 \n  type: action\n  action:\n    secrets: [\"sshkey\"\
+          ]\n    files: \n    - key: payload.txt\n      scope: workflow\n    function:\
+          \ scp\n    input: \n      scp:\n      - source:\n          file: payload.txt\n\
+          \        target:\n          host: ec2-11-111-99-99.compute-1.amazonaws.com\n\
+          \          user: ubuntu\n          identity: jq(.secrets.sshkey)\n     \
+          \     file: /tmp/myfile\n  catch:\n  - error: \"io.direktiv.command.error\""
+      - title: SCP remote to remote with certificate
+        content: "- id: scp2 \n  type: action\n  action:\n    secrets: [\"sshkey\"\
+          ]\n    function: scp\n    input: \n      scp:\n      - source:\n       \
+          \   host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user: ubuntu\n\
+          \          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n\
+          \        target:\n          host: ec2-11-111-99-100.compute-1.amazonaws.com\n\
+          \          user: ubuntu\n          identity: jq(.secrets.sshkey)\n     \
+          \     file: /tmp/myfile\n  catch:\n  - error: \"io.direktiv.command.error\""
+      - title: Copy with password between remotes with ssh key and password
+        content: "- id: getter \n  type: action\n  action:\n    secrets: [\"sshkey\"\
+          , \"scppwd\"]\n    function: scp\n    input: \n      scp:\n      - source:\n\
+          \          host: ec2-11-111-99-99.compute-1.amazonaws.com\n          user:\
+          \ ubuntu\n          identity: jq(.secrets.sshkey)\n          file: /tmp/hello1\n\
+          \        target:\n          file: file1\n      - source:\n          file:\
+          \ file1\n        target:\n          host: 192.168.1.1\n          user: direktiv\n\
+          \          password: jq(.secrets.scppwd)\n          file: /tmp/targetfile\n\
+          \  catch:\n  - error: \"io.direktiv.command.error\""
+      - title: Copy from remote to Direktiv variable
+        content: "- id: getter \n  type: action\n  action:\n    secrets: [\"scpkey\"\
+          , \"scppwd\"]\n    function: scp\n    input: \n      scp:\n      - source:\n\
+          \          host: 10.100.6.8\n          user: direktiv\n          password:\
+          \ jq(.secrets.scppwd)\n          file: /tmp/file\n        target:\n    \
+          \      file: out/workflow/myfile.txt\n  catch:\n  - error: \"io.direktiv.command.error\""
+      x-direktiv-secrets:
+      - name: sshkey
+        description: SSH key for target or source. Each remote can have a key.
+      - name: scppwd
+        description: Passwords are only allowed for the source of the involved hosts.
+      x-direktiv:
+        cmds:
+        - action: foreach
+          loop: .Scp
+          exec: "setup.sh '{{ .Item.Source | toJson }}' '{{ .Item.Target | toJson\
+            \ }}' '{{ .Item.Verbose | toJson }}' '{{ .Item.Recursive | toJson }}'"
+          continue: "{{ .Item.Continue }}"
+          print: false
+          silent: false
+        output: |
+          {
+            "scp": {{ index . 0 | toJson }}
+          }
+      x-direktiv-errors:
+        io.direktiv.command.error: Command execution failed
+        io.direktiv.output.error: Template error for output generation of the service
+        io.direktiv.ri.error: Can not create information object from request
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    direktivFile:
+      type: object
+      x-go-type:
+        type: DirektivFile
+        import:
+          package: github.com/direktiv/apps/go/pkg/apps
+    error:
+      required:
+      - errorCode
+      - errorMessage
+      type: object
+      properties:
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+    scpPart:
+      required:
+      - file
+      type: object
+      properties:
+        host:
+          type: string
+          description: Hostname of the target or source. Empty if local.
+        port:
+          type: integer
+          description: Port of the target or source. Empty if local.
+        user:
+          type: string
+          description: User of the target or source.
+        identity:
+          type: string
+          description: SSH key for the target or source.
+        password:
+          type: string
+          description: Password for target or source. Only the source host can use
+            a password. SSH key recommended.
+        file:
+          type: string
+          description: "File to copy. In target the Direktiv `out` folders can be\
+            \ used, e.g. `out/workflow/myfile` to store the file in workflow scope."
+
